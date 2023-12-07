@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Properties;
 
 
@@ -36,25 +38,66 @@ public class DB {
 		}
 	}
 
-	// public static ArrayList<League> loadLeagues() {
-	// 	ArrayList<League> list = new ArrayList<>();
-	// 	String queryString = " select league.league_id, league_name, count(team.league_id)  as used " +
-	// 						" from league  " +
-	// 						" left join team on league.league_id = team.league_id " + 
-	// 						" group by league.league_id, league_name " + 
-	// 						" order by league_name ";
+	public static ArrayList<Chemical> loadChemical() {
+		ArrayList<Chemical> list = new ArrayList<>();
+		String queryString = " select chemical_id, chemical_name" +
+							" from chemicals" +
+							" order by chemical_name ";
+
+		try (
+				PreparedStatement queryStmt = db.conn.prepareStatement(queryString);
+				ResultSet rs = queryStmt.executeQuery();) {
+
+			while (rs.next()) {
+				Chemical chemical = new Chemical(rs.getString("chemical_id"), rs.getString("chemical_name"));
+
+				list.add(chemical);				
+			}
+
+		} catch (Exception ex) {
+			System.err.println(ex);
+			ex.printStackTrace(System.err);
+		}
+
+		return list;
+	}
+	public static ArrayList<Name> loadName() {
+		ArrayList<Name> list = new ArrayList<>();
+		String queryString = " select user_id, name" +
+							" from user" +
+							" order by name ";
+
+		try (
+				PreparedStatement queryStmt = db.conn.prepareStatement(queryString);
+				ResultSet rs = queryStmt.executeQuery();) {
+
+			while (rs.next()) {
+				Name name = new Name(rs.getString("user_id"), rs.getString("name"));
+
+				list.add(name);				
+			}
+
+		} catch (Exception ex) {
+			System.err.println(ex);
+			ex.printStackTrace(System.err);
+		}
+
+		return list;
+	}
+	// public static ArrayList<Existing> loadExisting() {
+	// 	ArrayList<Chemical> list = new ArrayList<>();
+	// 	String queryString = " select chemical_id, chemical_name" +
+	// 						" from chemicals" +
+	// 						" order by chemical_name ";
 
 	// 	try (
 	// 			PreparedStatement queryStmt = db.conn.prepareStatement(queryString);
 	// 			ResultSet rs = queryStmt.executeQuery();) {
 
 	// 		while (rs.next()) {
-	// 			League league = new League(rs.getString("league_id"), rs.getString("league_name"));
+	// 			Chemical chemical = new Chemical(rs.getString("chemical_id"), rs.getString("chemical_name"));
 
-	// 			// A team can be deleted if it is not used in a child table (player)
-	// 			league.setCanDelete(rs.getInt("used") == 0);
-
-	// 			list.add(league);				
+	// 			list.add(chemical);				
 	// 		}
 
 	// 	} catch (Exception ex) {
@@ -64,8 +107,7 @@ public class DB {
 
 	// 	return list;
 	// }
-
-	public static void insertChemical(String chemical,String quantity,String description,String firstName,String lastName) {
+	public static void insertChemical(String quantity,String description) {
 		String query = "insert into transaction(quantity, description) values (?,?)";
 
 		try (PreparedStatement insertStmt = db.conn.prepareStatement(query)) {

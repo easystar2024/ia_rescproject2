@@ -1,25 +1,44 @@
 package bca; 
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 public class integration extends Application {
     private Text dateText;
     private Stage secondaryStage;
-    private TextField chemicalNameField, quantityField, descriptionField, firstNameField, lastNameField;
+    private Stage editStage = new Stage();
+
+    private TextField quantityField, descriptionField;
+    private ComboBox<Chemical> chemicalNameField;
+    private ComboBox<Name> nameField;
     private VBox dataRows;
 
+    ObservableList<Chemical> chemicalList = FXCollections.observableArrayList();
+        
+        public void fillChemicalList(){
+            chemicalList.clear();
+            chemicalList.addAll(DB.loadChemical());
+        }
+    ObservableList<Name> nameList = FXCollections.observableArrayList();
+        
+        public void fillnameList(){
+            nameList.clear();
+            nameList.addAll(DB.loadName());
+        }
     @Override
     public void start(Stage primaryStage) {
         // Creating the Page Title
@@ -39,6 +58,8 @@ public class integration extends Application {
             }
         }).start();
 
+        
+
         // Creating the top left section for page title and date
         VBox topLeftSection = new VBox(5, pageTitle, dateText);
         topLeftSection.setAlignment(Pos.TOP_LEFT);
@@ -53,17 +74,23 @@ public class integration extends Application {
             createVerticalLine(),
             createHeader("Description"),
             createVerticalLine(),
-            createHeader("First Name"),
-            createVerticalLine(),
-            createHeader("Last Name")
+            createHeader("User Name")
+            // createVerticalLine(),
+            // createHeader("Last Name")
         );
         headers.setAlignment(Pos.CENTER);
+        headers.setSpacing(20);
 
         dataRows = new VBox();
         Line line = createHorizontalLine();
 
         VBox mainLayout = new VBox(10);
         mainLayout.getChildren().addAll(topLeftSection, headers, createHorizontalLine(), dataRows);
+
+        // run a query that gets all rows from table
+        // for each row call addDataRow (addDataToList)
+
+
 
         // Add button in the main screen
         Button addButton = new Button("Add");
@@ -72,8 +99,14 @@ public class integration extends Application {
             openSecondaryStage();
             
         });
+        Button editDeleteButton = new Button("Edit/Delete");
+        editDeleteButton.setOnAction(event -> {
 
-        HBox addLayout = new HBox(20, addButton);
+            openEditStage();
+
+        });
+
+        HBox addLayout = new HBox(20, addButton, editDeleteButton);
         addLayout.setAlignment(Pos.CENTER);
         mainLayout.getChildren().add(addLayout);
 
@@ -82,43 +115,60 @@ public class integration extends Application {
         // Set up the secondary stage for data entry
         secondaryStage = new Stage();
         secondaryStage.setTitle("Data Entry");
-
+        
+        //Set up the secondary stage for edit/delete functions
         VBox secondaryLayout = new VBox(10);
         Text pageTitleSecondary = new Text("River Edge Swim Club");
         Text addChemicalText = new Text("Add Chemical Input");
         dateText = new Text();
         updateDate();
         secondaryLayout.getChildren().addAll(pageTitleSecondary, dateText, addChemicalText);
-
-        chemicalNameField = new TextField();
+        fillChemicalList();
+        chemicalNameField = new ComboBox<>(chemicalList);
         chemicalNameField.setPromptText("Chemical Name");
         quantityField = new TextField();
         quantityField.setPromptText("Quantity");
         descriptionField = new TextField();
         descriptionField.setPromptText("Description");
-        firstNameField = new TextField();
-        firstNameField.setPromptText("First Name");
-        lastNameField = new TextField();
-        lastNameField.setPromptText("Last Name");
+        fillnameList();
+        nameField = new ComboBox<>(nameList);
+        nameField.setPromptText("User Name");
 
         Button submitButton = new Button("Submit");
         submitButton.setOnAction(e -> {
             addDataToList();
-            String chemical = chemicalNameField.getText();
+           //String chemical = chemicalNameField.getText();
             String quantity = quantityField.getText();
             String description = descriptionField.getText();
-            String firstName = firstNameField.getText();
-            String lastName = lastNameField.getText();
-            DB.insertChemical(chemical, quantity, description, firstName, lastName);
+            //String firstName = firstNameField.getText();
+            //String lastName = lastNameField.getText();
+            DB.insertChemical(quantity, description);
             secondaryStage.close();
         });
-
-        secondaryLayout.getChildren().addAll(chemicalNameField, quantityField, descriptionField, firstNameField, lastNameField, submitButton);
+    
+        secondaryLayout.getChildren().addAll(chemicalNameField, quantityField, descriptionField, nameField, submitButton);
         secondaryLayout.setAlignment(Pos.CENTER);
         secondaryLayout.setPadding(new Insets(20));
 
         Scene secondaryScene = new Scene(secondaryLayout, 400, 300);
         secondaryStage.setScene(secondaryScene);
+
+            editStage.setTitle("Edit/Delete Data");
+    
+            VBox editLayout = new VBox(10);
+            Text editTitle = new Text("Edit/Delete Chemical Data");
+            // Add more UI components here as needed for editing/deleting
+            // Example: TextField for editing, Buttons for 'Save' and 'Delete' operations
+            // ...
+    
+            editLayout.getChildren().addAll(editTitle /*, other UI components */);
+            editLayout.setAlignment(Pos.CENTER);
+            editLayout.setPadding(new Insets(20));
+    
+            Scene editScene = new Scene(editLayout, 400, 300);
+            editStage.setScene(editScene);
+    
+        
 
         primaryStage.setScene(mainScene);
         primaryStage.setTitle("River Edge Swim Club Application");
@@ -135,19 +185,16 @@ public class integration extends Application {
     private void openSecondaryStage() {
         secondaryStage.show();
     }
-
+    private void openEditStage(){
+            editStage.show();
+    }
     private void addDataToList() {
-        // Implement logic to add the input data to the list displayed in the main screen
-        // Get the data from the fields and display it in the main screen
-        // Example: create labels/text and add them to the mainLayout in the appropriate section
-        // Use the data from the fields: chemicalNameField.getText(), quantityField.getText(), etc.
-        String chemical = chemicalNameField.getText();
+        Chemical chemical = chemicalNameField.getValue();
         String quantity = quantityField.getText();
         String description = descriptionField.getText();
-        String firstName = firstNameField.getText();
-        String lastName = lastNameField.getText();
+        Name userName = nameField.getValue();
 
-        HBox row = createDataRow(chemical, quantity, description, firstName, lastName);
+        HBox row = createDataRow(chemical.getChem_name(), quantity, description, userName.getName());
         dataRows.getChildren().addAll(row, createHorizontalLine());
     }
 
@@ -171,11 +218,11 @@ public class integration extends Application {
         return line;
     }
 
-    private HBox createDataRow(String col1, String col2, String col3, String col4, String col5) {
-        return new HBox(20, new Text(col1), createVerticalLine(), new Text(col2), createVerticalLine(), new Text(col3), createVerticalLine(), new Text(col4), createVerticalLine(), new Text(col5));
+    private HBox createDataRow(String col1, String col2, String col3, String col4) {
+        return new HBox(20, new Text(col1), createVerticalLine(), new Text(col2), createVerticalLine(), new Text(col3), createVerticalLine(), new Text(col4), createVerticalLine());
     }
 
     public static void main(String[] args) {
         launch(args);
     }
-}
+}   
